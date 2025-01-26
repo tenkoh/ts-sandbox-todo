@@ -1,43 +1,30 @@
-import { createInterface } from "node:readline";
-const rl = createInterface({
-	input: process.stdin,
-	output: process.stdout,
+import { readFileSync } from "node:fs";
+import { writeFile } from "node:fs/promises";
+import path from "node:path";
+import { createInterface, type Interface as rli } from "node:readline";
+import { fileURLToPath } from "node:url";
+import { z } from "zod";
+
+const TodoItemSchema = z.object({
+	title: z.string(),
+	body: z.string().optional(),
+	createdAt: z.coerce.date(),
+	deadline: z.coerce.date().optional(),
+	status: z.enum(["before", "progress", "finished", "canceled"]),
 });
 
-class TodoItem {
-	title: string;
-	body?: string;
-	readonly createdAt: Date;
-	deadline?: Date;
-	status: TodoStatus = "before";
+const TodoItemArraySchema = z.array(TodoItemSchema);
 
-	constructor(
-		title: string,
-		createdAt: Date,
-		body: string | undefined = undefined,
-		deadline: Date | undefined = undefined,
-	) {
-		this.title = title;
-		this.createdAt = createdAt;
-		this.body = body;
-		this.deadline = deadline;
-	}
-}
-
-type TodoStatus = "before" | "progress" | "finished" | "canceled";
-
-const todos: TodoItem[] = [
-	new TodoItem("hello world", new Date()),
-	new TodoItem("foo bar", new Date()),
-];
-
-todos[1].status = "progress";
+type TodoItem = z.infer<typeof TodoItemSchema>;
+type TodoItemInput = z.input<typeof TodoItemSchema>;
 
 class TodoStore {
 	todos: TodoItem[];
 
-	constructor(todos: TodoItem[]) {
-		this.todos = todos;
+	constructor(filepath: string) {
+		const data = readFileSync(filepath, { encoding: "utf-8" });
+		const jsonData = JSON.parse(data);
+		this.todos = TodoItemArraySchema.parse(jsonData);
 	}
 
 	filterBy<T extends keyof TodoItem>(key: T, value: TodoItem[T]) {
@@ -46,16 +33,17 @@ class TodoStore {
 		});
 	}
 
-	append(title: string, body: string | undefined = undefined) {
-		this.todos.push(new TodoItem(title, new Date(), body, undefined));
+	append(item: TodoItemInput) {
+		try {
+			const validated = TodoItemSchema.parse(item);
+			this.todos.push(validated);
+		} catch (error) {
+			console.warn(`validation error: ${error}`);
+		}
 	}
 }
 
-const store = new TodoStore(todos);
-const filtered = store.filterBy("status", "progress");
-console.log(filtered);
-
-function askQuestion(prompt: string, must = false): Promise<string> {
+function askQuestion(rl: rli, prompt: string, must = false): Promise<string> {
 	return new Promise((resolve) => {
 		const askAgain = () => {
 			rl.question(prompt, (answer) => {
@@ -71,12 +59,40 @@ function askQuestion(prompt: string, must = false): Promise<string> {
 	});
 }
 
-async function addTodo(store: TodoStore) {
-	const title = await askQuestion("TODOのタイトルを追加してください", true);
-	const body = await askQuestion("(任意)詳細を入力してください");
-	store.append(title, body === "" ? undefined : body);
+async function addTodo(rl: rli, store: TodoStore) {
+	const title = await askQuestion(
+		rl,
+		"TODOのタイトルを追加してください: ",
+		true,
+	);
+	const body = await askQuestion(rl, "(任意)詳細を入力してください: ");
+	store.append({
+		title: title,
+		body: body === "" ? undefined : body,
+		createdAt: new Date(),
+		deadline: undefined,
+		status: "before",
+	});
 }
 
-await addTodo(store);
-console.log(store.todos);
-rl.close();
+const main = async () => {
+	const rl = createInterface({
+		input: process.stdin,
+		output: process.stdout,
+	});
+
+	const dirname = path.dirname(fileURLToPath(import.meta.url));
+
+	const store = new TodoStore(path.join(dirname, "../todos.json"));
+	// const filtered = store.filterBy("status", "progress");
+	await addTodo(rl, store);
+	rl.close();
+
+	await writeFile(
+		path.join(dirname, "../todos.json"),
+		JSON.stringify(store.todos, null, 2),
+		{ encoding: "utf-8" },
+	);
+};
+
+await main();

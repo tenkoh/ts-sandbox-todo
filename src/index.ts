@@ -16,7 +16,6 @@ const TodoItemSchema = z.object({
 const TodoItemArraySchema = z.array(TodoItemSchema);
 
 type TodoItem = z.infer<typeof TodoItemSchema>;
-type TodoItemInput = z.input<typeof TodoItemSchema>;
 
 class TodoStore {
 	todos: TodoItem[];
@@ -33,7 +32,7 @@ class TodoStore {
 		});
 	}
 
-	append(item: TodoItemInput) {
+	append(item: TodoItem) {
 		try {
 			const validated = TodoItemSchema.parse(item);
 			this.todos.push(validated);

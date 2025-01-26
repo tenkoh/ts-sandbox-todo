@@ -13,8 +13,6 @@ const TodoItemSchema = z.object({
 	status: z.enum(["before", "progress", "finished", "canceled"]),
 });
 
-const TodoItemArraySchema = z.array(TodoItemSchema);
-
 type TodoItem = z.infer<typeof TodoItemSchema>;
 
 class TodoStore {
@@ -23,7 +21,7 @@ class TodoStore {
 	constructor(filepath: string) {
 		const data = readFileSync(filepath, { encoding: "utf-8" });
 		const jsonData = JSON.parse(data);
-		this.todos = TodoItemArraySchema.parse(jsonData);
+		this.todos = z.array(TodoItemSchema).parse(jsonData);
 	}
 
 	filterBy<T extends keyof TodoItem>(key: T, value: TodoItem[T]) {

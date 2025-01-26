@@ -40,36 +40,46 @@ class TodoStore {
 	}
 }
 
-function askQuestion(rl: rli, prompt: string, must = false): Promise<string> {
-	return new Promise((resolve) => {
-		const askAgain = () => {
-			rl.question(prompt, (answer) => {
-				if (!must || (must && answer.trim() !== "")) {
-					resolve(answer);
-				} else {
-					console.log("input required");
-					askAgain();
-				}
-			});
-		};
-		askAgain();
-	});
-}
+type todoAppender = {
+	append(todo: TodoItem): void;
+};
 
-async function addTodo(rl: rli, store: TodoStore) {
-	const title = await askQuestion(
-		rl,
-		"TODOのタイトルを追加してください: ",
-		true,
-	);
-	const body = await askQuestion(rl, "(任意)詳細を入力してください: ");
-	store.append({
-		title: title,
-		body: body === "" ? undefined : body,
-		createdAt: new Date(),
-		deadline: undefined,
-		status: "before",
-	});
+class addTodoService {
+	private readonly rl: rli;
+	private readonly store: todoAppender;
+
+	constructor(rl: rli, store: todoAppender) {
+		this.rl = rl;
+		this.store = store;
+	}
+
+	private askQuestion(prompt: string, must = false): Promise<string> {
+		return new Promise((resolve) => {
+			const askAgain = () => {
+				this.rl.question(prompt, (answer) => {
+					if (!must || (must && answer.trim() !== "")) {
+						resolve(answer);
+					} else {
+						console.log("input required");
+						askAgain();
+					}
+				});
+			};
+			askAgain();
+		});
+	}
+
+	async addTodo() {
+		const title = await this.askQuestion("TODOのタイトル: ", true);
+		const body = await this.askQuestion("(任意)詳細: ");
+		this.store.append({
+			title: title,
+			body: body === "" ? undefined : body,
+			createdAt: new Date(),
+			deadline: undefined,
+			status: "before",
+		});
+	}
 }
 
 const main = async () => {
@@ -79,17 +89,15 @@ const main = async () => {
 	});
 
 	const dirname = path.dirname(fileURLToPath(import.meta.url));
+	const filename = path.join(dirname, "../todos.json");
 
-	const store = new TodoStore(path.join(dirname, "../todos.json"));
-	// const filtered = store.filterBy("status", "progress");
-	await addTodo(rl, store);
+	const store = new TodoStore(filename);
+	await new addTodoService(rl, store).addTodo();
 	rl.close();
 
-	await writeFile(
-		path.join(dirname, "../todos.json"),
-		JSON.stringify(store.todos, null, 2),
-		{ encoding: "utf-8" },
-	);
+	await writeFile(filename, JSON.stringify(store.todos, null, 2), {
+		encoding: "utf-8",
+	});
 };
 
 await main();

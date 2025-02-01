@@ -1,20 +1,24 @@
 {
-  "name": "todo",
-  "version": "1.0.0",
-  "main": "index.js",
-  "type": "module",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "MIT",
-  "description": "",
-  "devDependencies": {
-    "@biomejs/biome": "1.9.4",
-    "@types/node": "^22.10.10",
-    "typescript": "^5.7.3"
-  },
-  "dependencies": {
-    "zod": "^3.24.1"
-  }
+	"name": "todo",
+	"version": "1.0.0",
+	"main": "index.js",
+	"type": "module",
+	"scripts": {
+		"test": "vitest run",
+		"check": "npx @biomejs/biome check",
+		"fix": "npx @biomejs/biome check --write"
+	},
+	"author": "",
+	"license": "MIT",
+	"description": "",
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@types/node": "^22.10.10",
+		"typescript": "^5.7.3",
+		"vitest": "^3.0.4"
+	},
+	"dependencies": {
+		"wrangler": "^3.107.0",
+		"zod": "^3.24.1"
+	}
 }

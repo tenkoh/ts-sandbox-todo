@@ -1,12 +1,12 @@
-name: test and format
+name: CI
 
 on:
   pull_request:
     types: [opened, reopened, synchronize]
 
 jobs:
-  TestAndFormat:
-    name: test and format
+  FormatAndTest:
+    name: format and test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

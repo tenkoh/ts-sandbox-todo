@@ -4,7 +4,9 @@
 	"main": "index.js",
 	"type": "module",
 	"scripts": {
-		"test": "vitest run"
+		"test": "vitest run",
+		"check": "npx @biomejs/biome check",
+		"fix": "npx @biomejs/biome check --write"
 	},
 	"author": "",
 	"license": "MIT",
@@ -20,3 +22,4 @@
 		"zod": "^3.24.1"
 	}
 }
+

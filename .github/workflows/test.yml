@@ -1,12 +1,12 @@
-name: test
+name: test and format
 
 on:
   pull_request:
     types: [opened, reopened, synchronize]
 
 jobs:
-  Test:
-    name: Run test codes
+  TestAndFormat:
+    name: test and format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,5 +14,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - run: npm test
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint and format
+        run: npm run check
+      - name: Test
+        run: npm test

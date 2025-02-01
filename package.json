@@ -16,6 +16,7 @@
     "vitest": "^3.0.4"
   },
   "dependencies": {
+    "wrangler": "^3.107.0",
     "zod": "^3.24.1"
   }
 }
